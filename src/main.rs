@@ -354,11 +354,22 @@ pub fn write_to_device(args: &AppArgs) {
             return false;
         }
     });
+    
+    
 
-    let mut handler = dev.unwrap().open().unwrap();
+    let dev = dev.unwrap();
+    
+    let cd = dev.config_descriptor(config).unwrap();
+    let num_interfaces = cd.num_interfaces();
+
+    let mut handler = dev.open().unwrap();
 
     handler.set_active_configuration(config);
-    handler.detach_kernel_driver(interface);
+ 
+    for i in 0..num_interfaces{
+        handler.detach_kernel_driver(i);
+    }
+    
     handler.claim_interface(interface);
 
     let mut keymaps = Vec::new();
