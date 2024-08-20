@@ -14,12 +14,14 @@ pub enum Mode {
     Info,
     Read,
     Write,
+    Test,
 }
 
 impl From<&str> for Mode {
     fn from(s: &str) -> Self {
         match s {
             "info" => Self::Info,
+            "test" => Self::Test,
             "read" => Self::Read,
             "write" => Self::Write,
             _ => {
@@ -333,6 +335,56 @@ struct Keymap {
 
 fn store_keymap() {}
 
+pub fn test_device(args: &AppArgs) {
+   let endpoint = args.endpoint.unwrap_or(129);
+    let interface = args.interface.unwrap_or(1);
+    let config = args.configuration.unwrap();
+    let device = args.device.as_ref().unwrap();
+
+    let mut ctx = libusb::Context::new().unwrap();
+
+    let dev = ctx.devices().unwrap().iter().find(|d| {
+        let descriptor = d.device_descriptor().unwrap();
+        let name = format!(
+            "{:04x}:{:04x}",
+            descriptor.vendor_id(),
+            descriptor.product_id()
+        );
+        if name == *device {
+            return true;
+        } else {
+            return false;
+        }
+    });
+    
+    
+
+    let dev = dev.unwrap();
+    
+    let cd = dev.config_descriptor(config).unwrap();
+    let num_interfaces = cd.num_interfaces();
+
+    let mut handler = dev.open().unwrap();
+
+    handler.set_active_configuration(config);
+ 
+    for i in 0..num_interfaces{
+        handler.detach_kernel_driver(i);
+    }
+    
+    handler.claim_interface(interface);
+      
+
+    let mut buf = [0u8; 8];
+    loop{
+      handler.read_interrupt(endpoint, &mut buf, Duration::default());
+      dbg!(buf);
+    }
+
+
+
+}
+
 pub fn write_to_device(args: &AppArgs) {
     let endpoint = args.endpoint.unwrap_or(129);
     let interface = args.interface.unwrap_or(1);
@@ -438,6 +490,9 @@ fn main() -> Result<()> {
             get_device_info(&args.device);
         }
         Mode::Read => {
+            write_to_device(&args);
+        }
+        Mode::Test => {
             write_to_device(&args);
         }
         Mode::Write => todo!(),
