@@ -493,7 +493,7 @@ fn main() -> Result<()> {
             write_to_device(&args);
         }
         Mode::Test => {
-            write_to_device(&args);
+            test_device(&args);
         }
         Mode::Write => todo!(),
     };
