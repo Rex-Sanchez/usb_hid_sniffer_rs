@@ -375,7 +375,7 @@ pub fn test_device(args: &AppArgs) {
     handler.claim_interface(interface);
       
 
-    let mut buf = [0u8; 8];
+    let mut buf = [0u8; 64];
     loop{
       handler.read_interrupt(endpoint, &mut buf, Duration::default());
       dbg!(buf);
